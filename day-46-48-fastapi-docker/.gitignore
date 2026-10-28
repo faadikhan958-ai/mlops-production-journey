@@ -1,0 +1,15 @@
+# Python environment aur cache (Kachra)
+__pycache__/
+.venv/
+venv/
+
+# Machine Learning Models (Heavy binaries)
+models/*.pkl
+models/*.joblib
+
+# Datasets (Large data files)
+data/*.csv
+data/*.json
+
+# Security / Secrets (Passwords aur API keys)
+.env
