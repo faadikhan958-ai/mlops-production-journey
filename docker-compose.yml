@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  # 1. FastAPI Service
+  api:
+    build: ./day-46-48-fastapi-docker
+    ports:
+      - "8000:8000"
+    networks:
+      - mlops-network
+
+  # 2.Heavy ML Model Service
+  model_inference:
+    image: python:3.9-slim
+    command: tail -f /dev/null
+    networks:
+      - mlops-network
+
+# 3. Custom Bridge Network
+networks:
+  mlops-network:
+    driver: bridge
