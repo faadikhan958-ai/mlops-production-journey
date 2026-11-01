@@ -1,9 +1,7 @@
-version: '3.8'
-
 services:
   # 1. FastAPI Service
   api:
-    build: ./day-46-48-fastapi-docker
+    build: ./fastapi-docker-mlops
     ports:
       - "8000:8000"
     networks:

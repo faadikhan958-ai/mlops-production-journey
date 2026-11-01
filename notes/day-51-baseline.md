@@ -4,7 +4,7 @@ Date: 31 October 2026
 
 ## 1. Repository
 - Root: D:\mlops-production-journey
-- Main app: day-46-48-fastapi-docker/
+- Main app: fastapi-docker-mlops/
 - Docker Compose: docker-compose.yml
 - Notes: notes/
 
@@ -87,7 +87,7 @@ Actual ML inference is not yet implemented or verified.
 
 ## 9. Git Status
 Modified:
-day-46-48-fastapi-docker/.dockerignore
+fastapi-docker-mlops/.dockerignore
 
 Intentional change:
 Removed *.pkl so the model file can be included
