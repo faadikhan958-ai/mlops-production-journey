@@ -1,11 +1,12 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.logger import logger
+from app.config import MODEL_PATH
 from app.schemas import PredictionRequest, PredictionResponse
 from app.ml_model import MLPredictor  # Import the class we created
 
 # Initialize the predictor object globally
-predictor = MLPredictor(model_path="models/dummy_car_model.pkl")
+predictor = MLPredictor(model_path=MODEL_PATH)
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
