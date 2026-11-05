@@ -1,0 +1,10 @@
+services:
+  volume-test:
+    image: python:3.11-slim
+    command: tail -f /dev/null
+    volumes:
+      - lab_data:/app/data
+      - ./host-data:/app/host-data
+
+volumes:
+  lab_data:

@@ -1,0 +1,2 @@
+Hello from Windows Host
+Updated from Docker Container
