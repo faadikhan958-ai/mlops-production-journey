@@ -2,7 +2,8 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from app.logger import logger
 from app.config import MODEL_PATH
-from app.schemas import PredictionRequest, PredictionResponse
+from fastapi.responses import JSONResponse
+from app.schemas import PredictionRequest, PredictionResponse, HealthResponse
 from app.ml_model import MLPredictor  # Import the class we created
 
 # Initialize the predictor object globally
@@ -19,6 +20,30 @@ async def lifespan(app: FastAPI):
     predictor.model = None 
 
 app = FastAPI(title="ML Production API", lifespan=lifespan)
+@app.get("/health", response_model=HealthResponse)
+async def health_check():
+    if predictor.model is None:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "not_ready",
+                "model_status": "not_loaded"
+            }
+        )
+
+    if predictor.is_fallback:
+        return JSONResponse(
+            status_code=503,
+            content={
+                "status": "not_ready",
+                "model_status": "fallback"
+            }
+        )
+
+    return HealthResponse(
+        status="ok",
+        model_status="ready"
+    )
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_endpoint(request: PredictionRequest):

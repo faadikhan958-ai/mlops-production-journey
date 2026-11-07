@@ -1,0 +1,8 @@
+services:
+  api-test:
+    build: ./fastapi-docker-mlops
+    ports:
+      - "8001:8000"
+    environment:
+      API_PORT: "8000"
+      MODEL_PATH: "models/dummy_car_model.pkl"

@@ -9,3 +9,7 @@ class PredictionResponse(BaseModel):
     prediction: int
     probability: float
     message: str
+
+class HealthResponse(BaseModel):
+    status: str
+    model_status: str
