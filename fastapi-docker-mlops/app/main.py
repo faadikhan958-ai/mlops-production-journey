@@ -47,7 +47,7 @@ async def health_check():
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_endpoint(request: PredictionRequest):
-    logger.info(f"Naya request aaya: {request.model_dump()}")
+    logger.info("Prediction request received")
     
     # Clean inference: FastAPI route doesn't know HOW the prediction happens
     predicted_value = predictor.predict(request.model_dump())

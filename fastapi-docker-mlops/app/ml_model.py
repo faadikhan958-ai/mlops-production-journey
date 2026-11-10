@@ -48,7 +48,7 @@ class MLPredictor:
             logger.error("Prediction attempted but model is not loaded.")
             raise ValueError("Call load_model() before predicting.")
 
-        logger.info(f"Running preprocessing and prediction for: {input_data}")
+        logger.info("Running preprocessing and prediction")
 
         # Actual production preprocessing and inference will go here.
         # features = preprocess(input_data)
