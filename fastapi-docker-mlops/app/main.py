@@ -1,60 +1,116 @@
+
 from contextlib import asynccontextmanager
 from fastapi import FastAPI
-from app.logger import logger
-from app.config import MODEL_PATH
-from fastapi.responses import JSONResponse
-from app.schemas import PredictionRequest, PredictionResponse, HealthResponse
-from app.ml_model import MLPredictor  # Import the class we created
+from uuid import uuid4
+import httpx
 
-# Initialize the predictor object globally
-predictor = MLPredictor(model_path=MODEL_PATH)
+from app.logger import logger
+from app.config import INFERENCE_SERVICE_URL
+from fastapi.responses import JSONResponse
+from app.schemas import (
+    PredictionRequest,
+    PredictionResponse,
+    HealthResponse
+)
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("Service start ho rahi hai. Model load kiya ja raha hai...")
-    # Model loading logic is now encapsulated inside the class
-    predictor.load_model()
-    yield
-    logger.info("Service band ho rahi hai, memory clean kar rahe hain.")
-    # Agar model memory release karni ho toh predictor class mein clear method bana sakte hain
-    predictor.model = None 
+    logger.info("Main API service starting...")
 
-app = FastAPI(title="ML Production API", lifespan=lifespan)
+    app.state.http_client = httpx.AsyncClient(
+        base_url=INFERENCE_SERVICE_URL,
+        timeout=10.0
+    )
+
+    yield
+
+    await app.state.http_client.aclose()
+
+    logger.info("Main API service shutting down...")
+
+
+app = FastAPI(
+    title="ML Production API",
+    lifespan=lifespan
+)
+
+
 @app.get("/health", response_model=HealthResponse)
 async def health_check():
-    if predictor.model is None:
+    try:
+        response = await app.state.http_client.get("/health")
+        response.raise_for_status()
+
+        return HealthResponse(
+            status="ok",
+            model_status="ready"
+        )
+
+    except httpx.HTTPError:
         return JSONResponse(
             status_code=503,
             content={
                 "status": "not_ready",
-                "model_status": "not_loaded"
+                "model_status": "unavailable"
             }
         )
 
-    if predictor.is_fallback:
-        return JSONResponse(
-            status_code=503,
-            content={
-                "status": "not_ready",
-                "model_status": "fallback"
-            }
-        )
-
-    return HealthResponse(
-        status="ok",
-        model_status="ready"
-    )
 
 @app.post("/predict", response_model=PredictionResponse)
 async def predict_endpoint(request: PredictionRequest):
-    logger.info("Prediction request received")
-    
-    # Clean inference: FastAPI route doesn't know HOW the prediction happens
-    predicted_value = predictor.predict(request.model_dump())
-    
-    logger.info("Prediction successful!")
-    return PredictionResponse(
-        prediction=predicted_value,
-        probability=0.85, # Isey bhi baad mein class se fetch karenge
-        message="API aur ML Model bilkul theek chal rahe hain!"
-    )
+
+    request_id = str(uuid4())
+
+    logger.info(f"{request_id} | Prediction request received")
+
+    try:
+        response = await app.state.http_client.post(
+            "/predict",
+            json=request.model_dump()
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+
+        prediction = result["prediction"]
+        message = result["message"]
+
+        logger.info(f"{request_id} | Prediction successful!")
+
+        return PredictionResponse(
+            prediction=prediction,
+            probability=0.85,
+            message=message
+        )
+
+    except httpx.TimeoutException:
+        logger.error(f"{request_id} | Inference service timeout")
+
+        return JSONResponse(
+            status_code=504,
+            content={
+                "detail": "Inference service timeout"
+            }
+        )
+
+    except httpx.ConnectError:
+        logger.error(f"{request_id} | Inference service unavailable")
+
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": "Inference service unavailable"
+            }
+        )
+
+    except httpx.HTTPStatusError:
+        logger.error(f"{request_id} | Inference service returned HTTP error")
+
+        return JSONResponse(
+            status_code=502,
+            content={
+                "detail": "Inference service returned an error"
+            }
+        )

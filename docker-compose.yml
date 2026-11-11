@@ -1,6 +1,5 @@
 
 services:
-  # FastAPI Service
   api:
     build: ./fastapi-docker-mlops
     ports:
@@ -21,14 +20,12 @@ services:
       retries: 3
       start_period: 10s
 
-  # Heavy ML Model Service
   model_inference:
-    image: python:3.9-slim
-    command: tail -f /dev/null
+    build: ./model-inference
+    ports:
+      - "8001:8001"
     networks:
       - mlops-network
-
-# Custom Bridge Network
 
 networks:
   mlops-network:
