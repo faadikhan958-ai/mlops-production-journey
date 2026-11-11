@@ -1,4 +1,3 @@
-
 # Day 57 — Logging Inside Containers
  
 **Project:** MLOps Production Journey
@@ -157,6 +156,45 @@ Practiced these interview topics:
 6. Purpose of raise.
 7. Docker container log inspection.
 8. Secure logging practices.
+## Additional Verification — 10 November 2026
+
+### 1. Request ID Verification
+- Generated a unique UUID for each prediction request.
+- Confirmed the same Request ID appears in both request-received and prediction-success logs.
+- Verified module names (`main` and `ml_model`) in logs.
+
+### 2. Live Docker Logs
+- Verified live logs using `docker compose logs -f api`.
+- Confirmed new logs appear while the container is running.
+- Stopped live log streaming using `Ctrl + C`.
+
+### 3. Docker Health Check
+- Verified container status using `docker compose ps`.
+- API status: `Up (healthy)`.
+- Health check endpoint: `/health`.
+- Interval: 30 seconds.
+- Timeout: 5 seconds.
+- Retries: 3.
+- Start period: 10 seconds.
+- Confirmed repeated health-check requests are normal monitoring activity.
+
+### 4. API Prediction Test
+- Sent a valid POST request to `/predict`.
+- Prediction returned: `25000`.
+- Probability returned: `0.85`.
+- API response was successful (`200 OK`).
+
+### 5. Exception Logging
+- Tested `logger.exception()` inside an `except` block.
+- Verified that the error message and traceback were logged.
+
+### 6. Key Learning
+- Request IDs help connect logs belonging to the same request.
+- Docker health checks monitor application health, not prediction accuracy.
+- `logger.exception()` records exception details and traceback.
+- Sensitive request payloads should not be logged.
+
+**Status:** Additional verification completed locally. No new Git commit or push performed.
 
 ## Day 57 — Completion Checklist
 
