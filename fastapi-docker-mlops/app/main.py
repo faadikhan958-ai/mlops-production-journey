@@ -1,8 +1,12 @@
 
 from contextlib import asynccontextmanager
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
+from app.dependencies import get_db
 from uuid import uuid4
 import httpx
+from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.logger import logger
 from app.config import INFERENCE_SERVICE_URL
@@ -58,7 +62,10 @@ async def health_check():
 
 
 @app.post("/predict", response_model=PredictionResponse)
-async def predict_endpoint(request: PredictionRequest):
+async def predict_endpoint(
+    request: PredictionRequest,
+    db: AsyncSession = Depends(get_db)
+):
 
     request_id = str(uuid4())
 
@@ -113,4 +120,19 @@ async def predict_endpoint(request: PredictionRequest):
             content={
                 "detail": "Inference service returned an error"
             }
+        )
+@app.get("/db-check")
+async def db_check(db: AsyncSession = Depends(get_db)):
+    try:
+        result = await db.execute(text("SELECT 1"))
+        value = result.scalar_one()
+
+        return {"database": "connected", "result": value}
+
+    except SQLAlchemyError:
+        logger.exception("Database health check failed")
+
+        return JSONResponse(
+            status_code=503,
+            content={"detail": "Database temporarily unavailable"}
         )
